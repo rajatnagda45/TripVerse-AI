@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="/logo.png" alt="TripVerseAI Logo" height="90" />
+  <img src="[/logo.png](https://chatgpt.com/backend-api/estuary/content?id=file_00000000666471fa8e01692a072f652f&ts=492958&p=fs&cid=1&sig=0b9868a4fb1412edc73e39bde0a61bf3090a2de957acd94dd82c8bb17b1d4b56&v=0)" alt="TripVerseAI Logo" height="90" />
   <h1>🌍 TripVerseAI — AI Travel Planner</h1>
   <p><strong>Your journey, intelligently crafted with AI.</strong></p>
   <p>
