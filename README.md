@@ -96,11 +96,6 @@ Visit [http://localhost:3000](http://localhost:3000) to see the results.
 * **Styling**: Tailwind CSS
 * **Backend**: Next.js API Routes (Edge Runtime)
 * **Database**: Supabase (Auth + PostgreSQL)
-* **APIs Used**:
-  * **Geoapify**: Maps + Places + Routing
-  * **OpenRouter**: AI (LLM) processing
-  * **OpenWeather**: Real-time atmospheric data
-  * **Unsplash**: High-fidelity place imagery
 
 ---
 
