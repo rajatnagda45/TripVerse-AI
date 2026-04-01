@@ -133,9 +133,9 @@ graph TD
 * [x] AI Itinerary Generator
 * [x] Interactive Dashboard
 * [x] Pricing & Subscription Models
-* [ ] AI Chat Assistant (beta)
-* [ ] Trip Remix Feature
-* [ ] Community Travel Feed
+* [x] AI Chat Assistant (beta)
+* [x] Trip Remix Feature
+* [x] Community Travel Feed
 * [ ] Export to PDF
 * [ ] Mobile Native App
 
