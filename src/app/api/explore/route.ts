@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import OpenAI from "openai";
 
 export async function POST(req: Request) {
   try {
@@ -8,13 +9,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "City is required" }, { status: 400 });
     }
 
-    const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+    const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
-    if (!openRouterApiKey) {
-      return NextResponse.json({ error: "API key missing" }, { status: 500 });
+    if (!GROQ_API_KEY || GROQ_API_KEY === 'YOUR_GROQ_API_KEY_HERE') {
+      return NextResponse.json({ error: "Please configure GROQ_API_KEY in .env.local" }, { status: 500 });
     }
 
     const unsplashApiKey = process.env.UNSPLASH_ACCESS_KEY;
+
+    // Initialize Groq
+    const groq = new OpenAI({
+      apiKey: GROQ_API_KEY,
+      baseURL: "https://api.groq.com/openai/v1",
+    });
 
     const systemPrompt = `You are a travel database API. Return a JSON object for: ${city}.
 Return ONLY valid JSON with exactly this structure:
@@ -40,38 +47,16 @@ Return ONLY valid JSON with exactly this structure:
 }
 Provide exactly 10 Things to do, 6 Restaurants, and 4 Stays.`;
 
-    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${openRouterApiKey}`
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.0-flash-001",
-        messages: [{ role: "user", content: systemPrompt }],
-        max_tokens: 3000,
-        temperature: 0.3,
-        response_format: { type: "json_object" }
-      })
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [{ role: "user", content: systemPrompt }],
+      response_format: { type: "json_object" }
     });
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error("OpenRouter Error:", errorText);
-      throw new Error(`Cloud API returned ${res.status}: ${errorText}`);
-    }
+    const text = completion.choices[0].message.content || "{}";
+    const result = JSON.parse(text);
 
-    const data = await res.json();
-    let text = data.choices?.[0]?.message?.content || "";
-    
-    // Safety check for JSON
-    let jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      console.error("No JSON matched in text:", text);
-      throw new Error("Invalid output from AI");
-    }
 
-    const result = JSON.parse(jsonMatch[0]);
 
     const FALLBACKS: Record<string, string[]> = {
       "Attraction": [

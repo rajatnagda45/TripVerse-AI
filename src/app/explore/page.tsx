@@ -3,16 +3,19 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, SlidersHorizontal, MapPin, Star, Heart, Plus, ChevronDown, X, ArrowLeft, ChevronLeft, ChevronRight, Share, Share2, Headphones, Map as MapIcon, Loader2, CheckCircle2, ArrowRight } from "lucide-react";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 export default function ExplorePage() {
   return (
-    <Suspense fallback={
-      <div className="flex h-screen items-center justify-center bg-[var(--background)] pt-16">
-        <Loader2 className="w-12 h-12 text-[#00BFA6] animate-spin" />
-      </div>
-    }>
-      <ExploreContent />
-    </Suspense>
+    <AuthGuard>
+      <Suspense fallback={
+        <div className="flex h-screen items-center justify-center bg-[var(--background)] pt-16">
+          <Loader2 className="w-12 h-12 text-[#00BFA6] animate-spin" />
+        </div>
+      }>
+        <ExploreContent />
+      </Suspense>
+    </AuthGuard>
   );
 }
 

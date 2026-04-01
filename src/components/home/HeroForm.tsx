@@ -4,9 +4,11 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { MapPin, IndianRupee, Heart, Clock, Users, ArrowRight, PlaneTakeoff, PlaneLanding, Plane } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function HeroForm() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     city: "Bali", 
@@ -20,9 +22,15 @@ export default function HeroForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // If user is not logged in, redirect to login first
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    
     setLoading(true);
     
-    // In actual implementation, 'from' could also be passed if required by the API
     const params = new URLSearchParams({
       city: formData.city,
       budget: formData.budget,

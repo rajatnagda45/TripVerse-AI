@@ -38,16 +38,18 @@ export default function Home() {
   ];
 
   return (
-      <main className="min-h-screen relative w-full overflow-hidden bg-[var(--background)] transition-colors duration-300">
+      <main className="min-h-screen relative w-full overflow-hidden bg-[var(--background)]">
       
       {/* Hero Header Area */}
       <div className="relative w-full h-[700px] flex flex-col justify-center px-4 md:px-12 lg:px-24">
         {/* Background Image Setup */}
         <div className="absolute inset-0 z-0">
-          <img 
+          <Image 
             src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2000" 
             alt="Travel Beach Scene"
-            className="w-full h-full object-cover object-center dark:brightness-75 transition-all duration-500"
+            fill
+            priority
+            className="object-cover object-center dark:brightness-75 transition-all duration-500"
           />
           {/* Subtle gradient overlay to ensure text contrast while keeping it vibrant */}
           <div className="absolute inset-0 bg-black/20 dark:bg-black/40"></div>
@@ -59,7 +61,7 @@ export default function Home() {
             What Is Your <br />
             <span className="text-[#00BFA6]">Destination?</span>
           </h1>
-          <div className="w-full max-w-2xl bg-[var(--surface)]/40 backdrop-blur-xl p-4 rounded-[2rem] shadow-2xl border border-white/20 transition-all duration-300">
+          <div className="w-full max-w-2xl bg-[var(--surface)]/40 backdrop-blur-md p-4 rounded-[2rem] shadow-2xl border border-white/20 transition-shadow transition-colors duration-300">
             <HeroForm />
           </div>
         </div>
@@ -111,7 +113,13 @@ export default function Home() {
               className="bg-[var(--surface)] rounded-[2.5rem] overflow-hidden border border-[var(--border)] shadow-sm hover:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.1)] transition-all duration-300 group flex flex-col"
             >
               <div className="relative h-64 w-full overflow-hidden">
-                <img src={deal.img} alt={deal.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                <Image 
+                  src={deal.img} 
+                  alt={deal.title} 
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover group-hover:scale-110 transition-transform duration-700" 
+                />
                 <div className="absolute top-5 left-5 bg-[#1A1A1A] text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full z-10 shadow-lg">
                   {deal.discount}
                 </div>
@@ -231,8 +239,13 @@ export default function Home() {
 
         {/* Global Footer */}
         <footer className="pt-20 pb-12 border-t border-[var(--border)] flex flex-col md:flex-row justify-between items-center gap-10">
-            <div className="bg-black px-6 py-2 rounded-xl shadow-lg">
-                <img src="/logo.png" alt="Logo" className="h-6 w-auto dark:invert dark:brightness-150 transition-all" />
+            <div className="bg-black px-6 py-2 rounded-xl shadow-lg relative h-10 w-32 overflow-hidden">
+                <Image 
+                  src="/logo.png" 
+                  alt="Logo" 
+                  fill
+                  className="object-contain px-4 py-1.5 dark:invert dark:brightness-150 transition-all" 
+                />
             </div>
             <div className="flex flex-wrap justify-center gap-8 text-[var(--muted)] font-bold text-sm">
                 <Link href="/about" className="hover:text-[#6C63FF] transition-colors">About</Link>

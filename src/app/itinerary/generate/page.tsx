@@ -5,12 +5,16 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Loader2, MapPin, CloudSun, IndianRupee, Clock, Download, RefreshCw, Share2, Heart, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 export default function GenerateItinerary() {
   return (
-    <Suspense fallback={<LoadingScreen />}>
-      <ItineraryContent />
-    </Suspense>
+    <AuthGuard>
+      <Suspense fallback={<LoadingScreen />}>
+        <ItineraryContent />
+      </Suspense>
+    </AuthGuard>
   )
 }
 
@@ -25,6 +29,7 @@ function LoadingScreen() {
 }
 
 function ItineraryContent() {
+  const { user, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [data, setData] = useState<any>(null);
@@ -46,7 +51,10 @@ function ItineraryContent() {
         const res = await fetch("/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ city, budget, mood, duration, group_type, places })
+          body: JSON.stringify({ 
+            city, budget, mood, duration, group_type, places,
+            userId: user?.uid 
+          })
         });
         
         const json = await res.json();
@@ -55,6 +63,7 @@ function ItineraryContent() {
            setError(json.error || "Failed to generate itinerary");
         } else {
            setData(json);
+           if (user) setSaved(true);
         }
       } catch (e: any) {
         setError("Network error occurred.");
@@ -63,37 +72,38 @@ function ItineraryContent() {
       }
     }
 
-    if (city && loading) {
+    if (city && loading && !authLoading) {
       generate();
     }
-  }, [city, budget, mood, duration, group_type, places]);
+  }, [city, budget, mood, duration, group_type, places, user, authLoading, loading]);
 
   const handleSave = async () => {
     if (saving || saved) return;
+    
+    if (!user) {
+      alert("Please log in to save itineraries.");
+      router.push("/login");
+      return;
+    }
+
     setSaving(true);
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user) {
-        alert("Please log in to save itineraries.");
-        router.push("/login");
-        return;
-      }
-
-      await supabase.from("itineraries").insert({
-        user_id: user.id,
+      const { error: insertError } = await supabase.from("itineraries").insert({
+        user_id: user.uid,
         city,
         budget,
         mood,
-        duration,
+        duration: duration || "1 week",
         data: data.itinerary
       });
       
+      if (insertError) throw insertError;
       setSaved(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Failed to save itinerary.");
+      alert(`Failed to save: ${err.message}`);
     } finally {
       setSaving(false);
     }

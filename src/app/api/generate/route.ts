@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import OpenAI from 'openai';
 
 export async function POST(req: Request) {
   try {
@@ -12,7 +13,17 @@ export async function POST(req: Request) {
 
     const GEOAPIFY_API_KEY = process.env.GEOAPIFY_API_KEY!;
     const WEATHER_API_KEY = process.env.OPENWEATHER_API_KEY!;
-    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY!;
+    const GROQ_API_KEY = process.env.GROQ_API_KEY!;
+
+    if (!GROQ_API_KEY || GROQ_API_KEY === 'YOUR_GROQ_API_KEY_HERE') {
+      return NextResponse.json({ error: "Please configure GROQ_API_KEY in .env.local" }, { status: 500 });
+    }
+
+    // Initialize Groq
+    const groq = new OpenAI({
+      apiKey: GROQ_API_KEY,
+      baseURL: "https://api.groq.com/openai/v1",
+    });
 
     // 1. Geocoding
     const geoResponse = await fetch(
@@ -31,8 +42,7 @@ export async function POST(req: Request) {
     const weatherData = await weatherResponse.json();
     const isRaining = weatherData.weather[0].main.toLowerCase().includes('rain');
 
-    // 3. Places (Simplified logic due to Geoapify places limitations - keeping it fast by grabbing general poi)
-    // We adjust categories based on mood and weather
+    // 3. Places
     let categories = 'tourism.sights,entertainment,leisure';
     if (isRaining) categories = 'entertainment.museum,entertainment.cinema,catering';
     if (mood === 'Party') categories += ',entertainment.nightclub,catering.bar';
@@ -43,13 +53,12 @@ export async function POST(req: Request) {
     );
     const placesData = await placesResponse.json();
     
-    // Filter out places to act as "Hidden Gems" simulation or high ratings (if available)
     const validPlaces = (placesData.features || [])
       .map((f: any) => f.properties.name)
       .filter(Boolean)
-      .slice(0, 15); // limit output for prompt
+      .slice(0, 15);
 
-    // 4. OpenRouter Prompt
+    // 4. Prompt
     const systemPrompt = `You are a premium, context-aware AI travel planner specializing in Indian and global travel. 
 Generate a comprehensive, hyper-personalized itinerary based on the user's constraints.
 All prices MUST be consistently estimated in Indian Rupees (₹).
@@ -87,38 +96,25 @@ Current Weather: ${weatherData.weather[0].description}, ${weatherData.main.temp}
 Candidate Places to include: ${validPlaces.join(', ')}
     `;
 
-    const aiRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "openai/gpt-4o-mini", // Fast, structured JSON capable model
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
-        response_format: { type: "json_object" }
-      })
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      response_format: { type: "json_object" }
     });
 
-    const aiData = await aiRes.json();
-    
-    if (aiData.error) {
-       return NextResponse.json({ error: aiData.error.message }, { status: 500 });
-    }
-
-    const rawResponse = aiData.choices[0].message.content;
+    const rawResponse = completion.choices[0].message.content || "{}";
     const itinerary = JSON.parse(rawResponse);
 
     // Save to DB (if logged in)
+    const { userId } = body;
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
 
-    if (user) {
+    if (userId) {
       await supabase.from('itineraries').insert({
-        user_id: user.id,
+        user_id: userId,
         city,
         budget,
         mood,
